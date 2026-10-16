@@ -15,7 +15,7 @@ api.interceptors.request.use((config) => {
 });
 
 export function getStoredToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  Storage.getItem(TOKEN_KEY);
 }
 
 export function setStoredToken(token) {
