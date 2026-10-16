@@ -1,7 +1,9 @@
+
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
 
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -11,8 +13,12 @@ const User = require("./models/User");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/datapulse";
+
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  throw new Error("Missing MONGODB_URI environment variable.");
+}
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
@@ -26,7 +32,8 @@ app.get("/", (_req, res) => {
       login: "POST /api/auth/login",
       me: "GET /api/auth/me",
       adminUsers: "GET /api/admin/users (Admin only)",
-      records: "GET /api/analytics?page=1&limit=10&q=&category=&sort=date&order=desc&range=30",
+      records:
+        "GET /api/analytics?page=1&limit=10&q=&category=&sort=date&order=desc&range=30",
       stats: "GET /api/analytics/stats?range=30",
       export: "GET /api/analytics/export",
       import: "POST /api/analytics/import",
@@ -39,9 +46,20 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ message: "Internal server error", error: err.message });
+  console.error("Request error:", err.message);
+
+  res.status(500).json({
+    message: "Internal server error",
+    error: err.message,
+  });
 });
+
+function daysAgo(n) {
+  const date = new Date();
+  date.setDate(date.getDate() - n);
+  date.setHours(10, 0, 0, 0);
+  return date;
+}
 
 const SAMPLE_RECORDS = [
   {
@@ -116,15 +134,9 @@ const SAMPLE_RECORDS = [
   },
 ];
 
-function daysAgo(n) {
-  const date = new Date();
-  date.setDate(date.getDate() - n);
-  date.setHours(10, 0, 0, 0);
-  return date;
-}
-
 async function seedUsers() {
   const count = await User.countDocuments();
+
   if (count > 0) {
     console.log(`Users already exist (${count})`);
     return;
@@ -149,35 +161,36 @@ async function seedUsers() {
 }
 
 async function seedDatabaseIfEmpty() {
-  // Never delete existing user data during startup. If the collection already
-  // contains records, leave it untouched and report the count.
   const count = await AnalyticsRecord.countDocuments();
+
   if (count > 0) {
-    console.log(`Database already has ${count} analytics records; preserving them`);
+    console.log(
+      `Database already has ${count} analytics records; preserving them`
+    );
     return;
   }
 
   await AnalyticsRecord.insertMany(SAMPLE_RECORDS);
+
   console.log(`Seeded ${SAMPLE_RECORDS.length} sample analytics records`);
 }
 
 async function start() {
   try {
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
-    console.log("MongoDB connected:", MONGO_URI);
+
+    console.log("MongoDB connected successfully");
+
     await seedUsers();
     await seedDatabaseIfEmpty();
 
-    app.listen(PORT, () => {
-      console.log(`DataPulse API running on http://localhost:${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`DataPulse API listening on port ${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error.message);
-    console.error(
-      "Make sure MongoDB is running locally, then restart the server."
-    );
     process.exit(1);
   }
 }
