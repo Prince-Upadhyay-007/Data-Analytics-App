@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+/* Auth forms use white fields with dark, readable input text. */
+@layer components {
+  .input {
+    @apply block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-black placeholder:text-slate-400 shadow-sm transition;
+  }
+
+  .input:focus {
+    @apply border-cyan-500 ring-2 ring-cyan-500/25;
+  }
+
+  .input:disabled {
+    @apply cursor-not-allowed bg-slate-100 text-slate-500;
+  }
+
+  .primary-btn {
+    @apply inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}
+
+/* Keep Chrome/Safari autofilled login values legible on white inputs. */
+input.input:-webkit-autofill,
+input.input:-webkit-autofill:hover,
+input.input:-webkit-autofill:focus,
+input.input:-webkit-autofill:active {
+  -webkit-text-fill-color: #000;
+  caret-color: #000;
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-700;
+}
+
+input,
+select,
+textarea,
+button {
+  @apply outline-none;
+}
+
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+  @apply ring-2 ring-cyan-400/60 ring-offset-2 ring-offset-slate-950;
+}
